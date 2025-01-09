@@ -7,12 +7,23 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to GitHub Container Registry
+      run: echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io --username ${{ secrets.GHCR_USERNAME }} --password-stdin
+
     - name: Build the Docker image
       run: docker build . --file runtime/python/Dockerfile --tag cosyvoice:$(date +%s)
+
+    - name: Tag the Docker image for GitHub Container Registry
+      run: docker tag cosyvoice:$(date +%s) ghcr.io/${{ secrets.GHCR_USERNAME }}/cosyvoice:$(date +%s)
+
+    - name: Push the Docker image to GitHub Container Registry
+      run: docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/cosyvoice:$(date +%s)
