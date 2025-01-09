@@ -25,11 +25,24 @@ jobs:
     - name: List Docker images
       run: docker images
 
+    # 登录 GitHub Container Registry
     - name: Log in to GitHub Container Registry
       run: echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io --username ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-    - name: Tag the Docker image for GitHub Container Registry
-      run: docker tag cosyvoice:$IMAGE_TAG ghcr.io/${{ secrets.GHCR_USERNAME }}/cosyvoice:$IMAGE_TAG
+    # 登录阿里云 Docker Registry
+    - name: Log in to Aliyun Container Registry
+      run: echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin
 
+    # 标记镜像为 GitHub Container Registry 和 阿里云 Registry
+    - name: Tag the Docker image for GitHub Container Registry
+      run: |
+        docker tag cosyvoice:$IMAGE_TAG ghcr.io/${{ secrets.GHCR_USERNAME }}/cosyvoice:$IMAGE_TAG
+        docker tag cosyvoice:$IMAGE_TAG registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_REPO }}/cosyvoice:$IMAGE_TAG
+
+    # 推送镜像到 GitHub Container Registry
     - name: Push the Docker image to GitHub Container Registry
       run: docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/cosyvoice:$IMAGE_TAG
+
+    # 推送镜像到阿里云镜像仓库
+    - name: Push the Docker image to Aliyun Container Registry
+      run: docker push registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_REPO }}/cosyvoice:$IMAGE_TAG
