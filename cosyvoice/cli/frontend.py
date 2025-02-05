@@ -122,8 +122,10 @@ class CosyVoiceFrontEnd:
                 text = text.replace(" - ", "，")
                 text = remove_bracket(text)
                 text = re.sub(r'[，,、]+$', '。', text)
-                texts = list(split_paragraph(text, partial(self.tokenizer.encode, allowed_special=self.allowed_special), "zh", token_max_n=80,
-                                             token_min_n=60, merge_len=20, comma_split=False))
+                # 通过大模型进行分段
+                texts = text.split("|")
+                #texts = list(split_paragraph(text, partial(self.tokenizer.encode, allowed_special=self.allowed_special), "zh", token_max_n=80,
+                #                             token_min_n=60, merge_len=20, comma_split=False))
             else:
                 text = self.en_tn_model.normalize(text)
                 text = spell_out_number(text, self.inflect_parser)
@@ -136,6 +138,13 @@ class CosyVoiceFrontEnd:
         tts_text_token, tts_text_token_len = self._extract_text_token(tts_text)
         embedding = self.spk2info[spk_id]['embedding']
         model_input = {'text': tts_text_token, 'text_len': tts_text_token_len, 'llm_embedding': embedding, 'flow_embedding': embedding}
+        return model_input
+
+    def frontend_sft2(self, tts_text, spk_id):
+        tts_text_token, tts_text_token_len = self._extract_text_token(tts_text)
+        model_input = self.spk2info[spk_id]
+        model_input['text'] = tts_text_token
+        model_input['text_len'] = tts_text_token_len
         return model_input
 
     def frontend_zero_shot(self, tts_text, prompt_text, prompt_speech_16k, resample_rate):
